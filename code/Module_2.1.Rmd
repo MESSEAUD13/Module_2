@@ -2,7 +2,9 @@
 title: "Module2"
 author: "AdrienM"
 date: "2026-06-03"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
 
 
