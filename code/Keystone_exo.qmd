@@ -1,0 +1,692 @@
+---
+title: "Keystoneexercice"
+format: html
+editor: visual
+---
+
+title: "R4MS Workshop 2 - Final Exercise"
+author: "Adrien Messeaud"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+ html_document:
+
+---
+
+```{r setup, include=FALSE}
+# Set options, housekeeping
+knitr::opts_chunk$set(
+	echo = FALSE,
+	include = TRUE,
+	message = FALSE,
+	warning = FALSE)
+```
+
+# Introduction
+
+Here we are going to wrangling in messy data on the Ross River estuary fish surveys and produce final clean tables and figure. We have 4 separate files to wrangle in and use
+
+# Housekeeping
+
+```{r housekeeping}
+#| message: true
+#| warning: false
+rm(list = ls())
+```
+
+# Packages
+
+```{r}
+library(tidyverse) # Inc dplyr, ggplot2, lubridate etc
+library(readxl) # For reading in excel files
+```
+
+# Load files
+
+# Main dataset
+
+The catch data is split across 4 tabs in one excel file Load indivudally
+
+```{r}
+title: "R4MS Workshop 2 - Final Exercise"
+author: "Ben Cresswell"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+ html_document:
+    code_folding: show
+    collapse: no
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 10
+    highlight: textmate
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+# Set options, housekeeping
+knitr::opts_chunk$set(
+	echo = FALSE,
+	include = TRUE,
+	message = FALSE,
+	warning = FALSE)
+```
+
+# Introduction
+
+Here we are going to wrangling in messy data on the Ross River estuary fish surveys and produce final clean tables and figure. We have 4 separate files to wrangle in and use
+
+# Housekeeping
+
+```{r housekeeping}
+#| message: true
+#| warning: false
+rm(list = ls())
+```
+
+# Packages
+
+```{r}
+library(tidyverse) # Inc dplyr, ggplot2, lubridate etc
+library(readxl) # For reading in excel files
+```
+
+# Load files
+
+# Main dataset
+
+The catch data is split across 4 tabs in one excel file Load indivudally
+
+```{r}
+title: "R4MS Workshop 2 - Final Exercise"
+author: "Ben Cresswell"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+ html_document:
+    code_folding: show
+    collapse: no
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 10
+    highlight: textmate
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+# Set options, housekeeping
+knitr::opts_chunk$set(
+	echo = FALSE,
+	include = TRUE,
+	message = FALSE,
+	warning = FALSE)
+```
+
+# Introduction
+
+Here we are going to wrangling in messy data on the Ross River estuary fish surveys and produce final clean tables and figure. We have 4 separate files to wrangle in and use
+
+# Housekeeping
+
+```{r housekeeping}
+#| message: true
+#| warning: false
+rm(list = ls())
+```
+
+# Packages
+
+```{r}
+library(tidyverse) # Inc dplyr, ggplot2, lubridate etc
+library(readxl) # For reading in excel files
+```
+
+# Load files
+
+# Main dataset
+
+The catch data is split across 4 tabs in one excel file Load indivudally
+
+```{r}
+catch1 <- read_excel(here::here("data/workshop2/estuary_catch_log.xlsx"), sheet = 1)
+catch2 <- read_excel("../data/workshop2/estuary_catch_log.xlsx", sheet = 2)
+catch3 <- read_excel("../data/workshop2/estuary_catch_log.xlsx", sheet = 3)
+catch4 <- read_excel("../data/workshop2/estuary_catch_log.xlsx", sheet = 4)
+```
+
+# Inspect individual tabs
+
+```{r}
+catch1
+catch2
+catch3
+catch4
+```
+
+# Bind rows together
+```{r}
+catch_data <- bind_rows(catch1, catch2, catch3, catch4)
+# Clean up the environment
+rm(catch1, catch2, catch3, catch4) # Clean up the environment
+```
+
+# Examine data
+```{r}
+catch_data
+head(catch_data)
+glimpse(catch_data)
+str(catch_data)
+```
+
+Can't tell from these outputs how many levels of site and species we have. Two options: let's check those explicitly by using distinct() or can convert to factors Let's look at the distinct values first, as we might need to clean before converting to factor vars.
+
+```{r}
+catch_data |> 
+  distinct(site)
+
+catch_data |> 
+  distinct(species)
+```
+OK, so we have four species in there as well as four sites which look to be located at different points on the Ross River.
+Need to:
+- Fix site names and place in reasonable order. 
+- Can decide this now or we can load the metadata and ensure consistency
+- Fix species names - to do this we'll need to make consistent and then use the taxonomic dictionary to translate to scientific names.
+
+
+# Load metadata
+```{r}
+metadata <- read_csv("../data/workshop2/estuary_metadata.csv")
+```
+
+
+# Inspect
+```{r}
+head(metadata)
+glimpse(metadata)
+```
+
+Site names are all over the place in the metadata too - will need to standardise.
+
+
+```{r}
+catch_data <- catch_data |>
+  mutate(
+    site = str_to_lower(str_trim(site)),
+    site = str_replace_all(site, " ", "_")) |> 
+  # Convert all chr to fct
+  mutate(across(where(is.character), as_factor)
+  )
+
+metadata <- metadata |>
+  mutate(
+    site_name = str_to_lower(str_trim(site_name)),
+    site_name = str_replace_all(site_name, " ", "_")) |> 
+  # Convert all chr to fct
+  mutate(across(where(is.character), as_factor)
+  )
+```
+
+
+# Recheck
+```{r}
+catch_data |> 
+  str()
+# catch_data |> 
+#   distinct(site)
+glimpse(metadata)
+
+```
+
+
+# Load Taxonomic Dictionary
+```{r}
+species_dict <- read_csv("../data/workshop2/species_dictionary.csv")
+head(species_dict)
+```
+
+
+
+
+# Wrangle the sonde data
+```{r}
+source(here::here("code/diw_sensor.R"))
+```
+#### Notes:
+- Environmental variables needed cleaning:
+- Turbidity data has a failed value (-999) 
+- Salinity had some negative values which are not possible and should be converted to NA
+- Site ok
+
+
+
+# Standardise variable in the catch log to match dictionaries
+```{r}
+catch_data <- catch_data |>
+  mutate(
+    site = str_to_lower(str_trim(site)),
+    site = str_replace_all(site, " ", "_"),
+    species = str_to_lower(str_trim(species)),
+    species = str_replace_all(species, " ", "_")
+  )
+```
+
+
+## Check common names in catch log match those in the taxonomic dictionary
+```{r}
+catch_data |> 
+  distinct(species)
+species_dict |>
+  distinct(common_name)
+```
+
+
+# Taxonomic Translation (Common to Scientific)
+```{r}
+catch_data <- catch_data |>
+  mutate(common_name = species) |>
+  left_join(species_dict, by = join_by(common_name))
+```
+
+
+# Need to:
+
+1. Join with metadata and sensor data
+2. Implicit zero observations
+4 x spp
+4 x sites
+30 surveys
+
+4*4*30
+
+# join catch data with metadata and sensor data
+```{r}
+catch_data_final <- catch_data |>
+  left_join(metadata, by = join_by(site == site_name)) |>
+  left_join(sensor_daily, by = join_by(site, date))
+```
+
+
+
+
+
+```{r}
+catch_data_final |> 
+  complete(
+    nesting(site, date, 
+           # lat, lon, 
+            zone, mean_temp, mean_salinity, mean_turbidity),
+    scientific_name
+  ) |>
+  mutate(
+    # Convert the resulting NA counts to 0
+    count = coalesce(count, 0)
+  )
+```
+```
+
+# Inspect individual tabs
+
+```{r}
+catch1
+catch2
+catch3
+catch4
+```
+
+# Bind rows together
+```{r}
+catch_data <- bind_rows(catch1, catch2, catch3, catch4)
+# Clean up the environment
+rm(catch1, catch2, catch3, catch4) # Clean up the environment
+```
+
+# Examine data
+```{r}
+catch_data
+head(catch_data)
+glimpse(catch_data)
+str(catch_data)
+```
+
+Can't tell from these outputs how many levels of site and species we have. Two options: let's check those explicitly by using distinct() or can convert to factors Let's look at the distinct values first, as we might need to clean before converting to factor vars.
+
+```{r}
+catch_data |> 
+  distinct(site)
+
+catch_data |> 
+  distinct(species)
+```
+OK, so we have four species in there as well as four sites which look to be located at different points on the Ross River.
+Need to:
+- Fix site names and place in reasonable order. 
+- Can decide this now or we can load the metadata and ensure consistency
+- Fix species names - to do this we'll need to make consistent and then use the taxonomic dictionary to translate to scientific names.
+
+
+# Load metadata
+```{r}
+metadata <- read_csv("../data/workshop2/estuary_metadata.csv")
+```
+
+
+# Inspect
+```{r}
+head(metadata)
+glimpse(metadata)
+```
+
+Site names are all over the place in the metadata too - will need to standardise.
+
+
+```{r}
+catch_data <- catch_data |>
+  mutate(
+    site = str_to_lower(str_trim(site)),
+    site = str_replace_all(site, " ", "_")) |> 
+  # Convert all chr to fct
+  mutate(across(where(is.character), as_factor)
+  )
+
+metadata <- metadata |>
+  mutate(
+    site_name = str_to_lower(str_trim(site_name)),
+    site_name = str_replace_all(site_name, " ", "_")) |> 
+  # Convert all chr to fct
+  mutate(across(where(is.character), as_factor)
+  )
+```
+
+
+# Recheck
+```{r}
+catch_data |> 
+  str()
+# catch_data |> 
+#   distinct(site)
+glimpse(metadata)
+
+```
+
+
+# Load Taxonomic Dictionary
+```{r}
+species_dict <- read_csv("../data/workshop2/species_dictionary.csv")
+head(species_dict)
+```
+
+
+
+
+# Wrangle the sonde data
+```{r}
+source(here::here("code/diw_sensor.R"))
+```
+#### Notes:
+- Environmental variables needed cleaning:
+- Turbidity data has a failed value (-999) 
+- Salinity had some negative values which are not possible and should be converted to NA
+- Site ok
+
+
+
+# Standardise variable in the catch log to match dictionaries
+```{r}
+catch_data <- catch_data |>
+  mutate(
+    site = str_to_lower(str_trim(site)),
+    site = str_replace_all(site, " ", "_"),
+    species = str_to_lower(str_trim(species)),
+    species = str_replace_all(species, " ", "_")
+  )
+```
+
+
+## Check common names in catch log match those in the taxonomic dictionary
+```{r}
+catch_data |> 
+  distinct(species)
+species_dict |>
+  distinct(common_name)
+```
+
+
+# Taxonomic Translation (Common to Scientific)
+```{r}
+catch_data <- catch_data |>
+  mutate(common_name = species) |>
+  left_join(species_dict, by = join_by(common_name))
+```
+
+
+# Need to:
+
+1. Join with metadata and sensor data
+2. Implicit zero observations
+4 x spp
+4 x sites
+30 surveys
+
+4*4*30
+
+# join catch data with metadata and sensor data
+```{r}
+catch_data_final <- catch_data |>
+  left_join(metadata, by = join_by(site == site_name)) |>
+  left_join(sensor_daily, by = join_by(site, date))
+```
+
+
+
+
+
+```{r}
+catch_data_final |> 
+  complete(
+    nesting(site, date, 
+           # lat, lon, 
+            zone, mean_temp, mean_salinity, mean_turbidity),
+    scientific_name
+  ) |>
+  mutate(
+    # Convert the resulting NA counts to 0
+    count = coalesce(count, 0)
+  )
+```
+```
+# Inspect individual tabs
+
+```{r}
+catch1
+catch2
+catch3
+catch4
+```
+
+# Bind rows together
+```{r}
+catch_data <- bind_rows(catch1, catch2, catch3, catch4)
+# Clean up the environment
+rm(catch1, catch2, catch3, catch4) # Clean up the environment
+```
+
+# Examine data
+```{r}
+catch_data
+head(catch_data)
+glimpse(catch_data)
+str(catch_data)
+```
+
+Can't tell from these outputs how many levels of site and species we have. Two options: let's check those explicitly by using distinct() or can convert to factors Let's look at the distinct values first, as we might need to clean before converting to factor vars.
+
+```{r}
+catch_data |> 
+  distinct(site)
+
+catch_data |> 
+  distinct(species)
+```
+OK, so we have four species in there as well as four sites which look to be located at different points on the Ross River.
+Need to:
+- Fix site names and place in reasonable order. 
+- Can decide this now or we can load the metadata and ensure consistency
+- Fix species names - to do this we'll need to make consistent and then use the taxonomic dictionary to translate to scientific names.
+
+
+# Load metadata
+```{r}
+metadata <- read_csv("data/Workshop_2/estuary_metadata.csv")
+```
+
+
+# Inspect
+```{r}
+head(metadata)
+glimpse(metadata)
+```
+
+Site names are all over the place in the metadata too - will need to standardise.
+
+
+```{r}
+catch_data <- catch_data |>
+  mutate(
+    site = str_to_lower(str_trim(site)),
+    site = str_replace_all(site, " ", "_")) |> 
+  # Convert all chr to fct
+  mutate(across(where(is.character), as_factor)
+  )
+
+metadata <- metadata |>
+  mutate(
+    site_name = str_to_lower(str_trim(site_name)),
+    site_name = str_replace_all(site_name, " ", "_")) |> 
+  # Convert all chr to fct
+  mutate(across(where(is.character), as_factor)
+  )
+```
+
+
+# Recheck
+```{r}
+catch_data |> 
+  str()
+# catch_data |> 
+#   distinct(site)
+glimpse(metadata)
+
+```
+
+
+# Load Taxonomic Dictionary
+```{r}
+species_dict <- read_csv("data/Workshop_2/species_dictionary.csv")
+head(species_dict)
+```
+
+
+
+#  Load sensor data, 
+```{r}
+sensor_raw <- read_csv("data/Workshop_2/estuary_sonde_data.csv")
+```
+
+
+# Check sensor data
+```{r}
+head(sensor_raw)
+str(sensor_raw)
+glimpse(sensor_raw)
+summary(sensor_raw)
+```
+
+### Clean up sensor data
+```{r}
+sensor_data <- 
+  sensor_raw |>
+  mutate(
+    # Parse the messy character string (Day/Month/Year Hour:Minute)
+    datetime = dmy_hm(timestamp),
+    # Convert the -999.0 hardware error to a true NA
+    turbidity = na_if(turbidity, -999),
+    # Convert negative salinity values to na
+    salinity = ifelse(salinity < 0, NA, salinity),
+  )
+```
+
+
+
+# Standardise variable in the catch log to match dictionaries
+```{r}
+catch_data <- catch_data |>
+  mutate(
+    site = str_to_lower(str_trim(site)),
+    site = str_replace_all(site, " ", "_"),
+    species = str_to_lower(str_trim(species)),
+    species = str_replace_all(species, " ", "_")
+  )
+```
+
+
+## Check common names in catch log match those in the taxonomic dictionary
+```{r}
+catch_data |> 
+  distinct(species)
+species_dict |>
+  distinct(common_name)
+```
+
+
+# Taxonomic Translation (Common to Scientific)
+```{r}
+catch_data <- catch_data |>
+  mutate(common_name = species) |>
+  left_join(species_dict, by = join_by(common_name)) |> 
+  select(site, date, common_name, scientific_name, count) |>
+  select(-common_name) 
+```
+
+```{r}
+# Need to:
+
+1. Join with metadata and sensor data
+2. Implicit zero observations
+4 x spp
+4 x sites
+30 surveys
+
+4*4*30
+```
+# join catch data with metadata and sensor data
+
+```{r}
+catch_data_final <- catch_data |>
+  left_join(metadata, by = join_by(site == site_name)) |>
+  left_join(sensor_daily, by = join_by(site, date))
+```
+
+
+
+```{r}
+catch_data_final |> 
+  complete(
+    nesting(site, date, 
+           # lat, lon, 
+            zone, mean_temp, mean_salinity, mean_turbidity),
+    scientific_name
+  ) |>
+  mutate(
+    # Convert the resulting NA counts to 0
+    count = coalesce(count, 0)
+  )
+```
+

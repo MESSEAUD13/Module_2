@@ -3,8 +3,8 @@ title: "Module2"
 author: "AdrienM"
 date: "2026-06-03"
 output:
-  word_document: default
   html_document: default
+  word_document: default
 ---
 #firstworkshop
 
@@ -14,37 +14,42 @@ library(tidyverse)
 library(readxl)
 library(here)
 ```
-
-```{r}
 # Practice Import A: Loading a standard comma-separated plain text file
-benthic_cover <- read_csv(here::here("data/reef_cover_log.csv"))
-
+```{r}
+benthic_cover <- read_csv(
+here::here("data", "Workshop_1", "reef_cover_log.csv")
+)
 ```
 
 ```{r}
-# Practice Import B: Parsing a tab-separated telemetry instrument array string
-acoustic_stream <- read_tsv(here::here("data/acoustic_telemetry_stream.txt"))
-
+acoustic_stream <- read_tsv(
+here::here("data", "Workshop_1", "acoustic_telemetry_stream.txt")
+)
 ```
 ```{r}
 # Practice Import C: Targeting a specific sheet in a multi-tab Excel spreadsheet
-fisheries_annual <- read_excel(here::here("data/fish_catch_data.xlsx"), sheet = "Commercial_2026")
-
+fisheries_annual <- read_excel(
+here::here("data", "Workshop_1", "fish_catch_data.xlsx"),
+sheet = "Commercial_2026"
+)
 ```
 
 ```{r}
 # Read in mangrove_data
-mangrove_data <- read_csv(file = here::here("data/mangrove_survey_raw.csv"))
-
+mangrove_data <- read_csv(
+file = here::here("data", "Workshop_1", "mangrove_survey_raw.csv"),
+skip = 5,
+na = c(".", "NA", "9999", "ND", "blank")
+)
 ```
 
 ```{r}
 # Use args within read_csv to skip headers and declare missing flags
 mangrove_data <- read_csv(
-  here::here("data/mangrove_survey_raw.csv"),
-  skip = 5,   # Skip the first 5 lines of field notes
-  na = c(".", "NA", "9999", "ND", "blank"))  # Convert known text alts to true NA
-
+here::here("data", "Workshop_1", "mangrove_survey_raw.csv"),
+skip = 5,
+na = c(".", "NA", "9999", "ND", "blank")
+)
 ```
 
 ```{r}
